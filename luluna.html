@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>chamd zoriulj hiisn kod zao</title>
+    <style>
+        :root {
+            --card-width: 650px;
+            --card-height: 450px;
+            --primary-pink: #d63031;
+            --soft-pink: #f2d2d2;
+            --pink: #ffafbd;
+            --dark-pink: #ff4b2b;
+            --white: #ffffff;
+            --bg-gradient: linear-gradient(135deg, #ffafbd, #ffc3a0);
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f7f1e3;
+            overflow-x: visible;
+        }
+
+        /* --- LOCK SCREEN STYLE --- */
+        #lock-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=2070&auto=format&fit=crop') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+        }
+
+        .overlay {
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(3px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .clock-container { text-align: center; color: white; margin-bottom: 40px; }
+        .time { font-size: 70px; font-weight: 200; margin: 0; }
+        .date { font-size: 18px; font-weight: 400; }
+
+        .passcode-container { display: flex; flex-direction: column; align-items: center; color: white; }
+        .passcode-text { margin-bottom: 15px; font-size: 17px; }
+        .dots { display: flex; gap: 15px; margin-bottom: 25px; }
+        .dot { width: 14px; height: 14px; border: 1.5px solid white; border-radius: 50%; }
+        .dot.active { background: white; }
+
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .key { width: 65px; height: 65px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); 
+               display: flex; justify-content: center; align-items: center; font-size: 24px; color: white; 
+               cursor: pointer; backdrop-filter: blur(10px); border: none; }
+
+        #hint { color: #ff453a; margin-top: 20px; font-size: 14px; opacity: 0; transition: opacity 0.3s;
+                background: rgba(255, 255, 255, 0.9); padding: 6px 15px; border-radius: 20px; }
+
+        /* --- LETTER PAGE STYLE --- */
+        #letter-page {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .card {
+            width: var(--card-width);
+            height: var(--card-height);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+        }
+
+        .flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%; height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            padding: 40px;
+            box-sizing: border-box;
+            background: white;
+            border: 1px solid #dcdde1;
+        }
+
+        .front { display: flex; justify-content: center; align-items: center; border: 12px solid #fff; }
+        .front-design { border: 2px solid var(--soft-pink); width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #fffafb; }
+        .heart-icon { font-size: 70px; color: var(--primary-pink); margin-bottom: 15px; animation: pulse 2s infinite ease-in-out; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        .front-text { color: #2f3640; font-style: italic; font-size: 24px; }
+
+        .back { transform: rotateY(180deg); display: flex; flex-direction: column; -y: auto; background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 100% 30px; line-height: 30px; padding: 50px; }
+        .back h2 { margin-top: 0; color: var(--primary-pink); font-family: 'Georgia', serif; }
+        .letter-text { font-size: 16px; color: #353b48; white-space: pre-wrap; font-family: 'Georgia', serif; }
+
+        .view-button { margin-top: 40px; padding: 12px 30px; background-color: var(--primary-pink); color: white; border: none; border-radius: 25px; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+
+        .card-face.back {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.letter-text {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px;
+    line-height: 1.6;
+}
+
+        /* --- VALENTINE CONTENT STYLE --- */
+        #valentine-page {
+            display: none;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 1s;
+        }
+
+        nav {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 1000;
+            display: flex; overflow-x: auto; white-space: nowrap; padding: 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .menu-item {
+            display: inline-block; padding: 12px 20px; margin: 0 10px;
+            background: white; border-radius: 25px; color: var(--dark-pink);
+            font-weight: bold; font-size: 0.9rem; cursor: pointer; transition: all 0.3s;
+        }
+
+        .menu-item:hover { transform: translateY(-2px); background: var(--dark-pink); color: white; }
+
+        .content-container { width: 100; max-width: 600px; margin-top: 10px; padding-bottom: 40px; }
+        .content-section {
+            display: none;  padding: 10px; border-radius: 20px;
+             animation: fadeIn 0.4s ease-out; text-align: center;
+        }
+
+        #welcome-screen { display: block; color: white; text-align: center; margin-top: 50px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-8px); } }
+
+        @media (max-width: 700px) {
+            :root { --card-width: 90vw; --card-height: 60vh; }
+            .time { font-size: 50px; }
+            .key { width: 55px; height: 55px; }
+        }
+        .mini-card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+.card-inner {
+    transform-style: preserve-3d;
+    transition: transform 0.8s;
+}
+    </style>
+</head>
+<body>
+
+<div id="lock-screen">
+    <div class="overlay">
+        <div class="clock-container">
+            <p class="date">Даваа гараг, 2-р сарын 9</p>
+            <h1 class="time" id="currentTime">00:00</h1>
+        </div>
+        <div class="passcode-container">
+            <div class="passcode-text">Нууц үг оруулна уу</div>
+            <div id="dotContainer" class="dots">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div class="keypad">
+                <button class="key" onclick="press(1)">1</button>
+                <button class="key" onclick="press(2)">2</button>
+                <button class="key" onclick="press(3)">3</button>
+                <button class="key" onclick="press(4)">4</button>
+                <button class="key" onclick="press(5)">5</button>
+                <button class="key" onclick="press(6)">6</button>
+                <button class="key" onclick="press(7)">7</button>
+                <button class="key" onclick="press(8)">8</button>
+                <button class="key" onclick="press(9)">9</button>
+                <button class="key" style="visibility: hidden;"></button>
+                <button class="key" onclick="press(0)">0</button>
+                <button class="key" style="font-size: 12px;" onclick="clearPass()">Устгах</button>
+            </div>
+            <div id="hint">💡 Hint: Үерхэж эхэлсэн өдөр </div>
+        </div>
+    </div>
+</div>
+
+<div id="letter-page">
+    <div class="card" id="myCard" onclick="flipCardOnly()">
+        <div class="card-face front">
+            <div class="front-design">
+                <div class="heart-icon">❤️</div>
+                <div class="front-text">A Letter for You</div>
+            </div>
+        </div>
+        <div class="card-face back">
+            <h2>Ma Boo,</h2>
+            <div class="letter-text">Чамайгаа санан суугаа энэ мөчид сэтгэлд минь багтамгүй их хайрыг үгээр илэрхийлэх гэж хичээх нь дэндүү “багадах” мэт санагдана. Гэвч зүрхээ дүүргэсэн тэр л нандин мэдрэмжүүдээ чамдаа хүргэхийн тулд энэхүү захидлыг бичиж сууна. Чиний нэрийг дотроо аяархан дуудмагц л бидний хамтдаа өнгөрүүлсэн өдрүүд нэг нэгээрээ нүдний өмнө гэрэлтэн гарч ирдэг юм.
+“Арагшаа хар даа” гэх ганцхан өгүүлбэрээс л бидний түүх жинхэнээсээ эхэлсэн байх. Анхны уулзалт… тэр өдрийг би хэзээ ч мартдаггүй. Өөрийнхөөрөө, бусдын юу гэх нь огтхон ч хамаагүй мэт, лаг хөмсөгтэй, ирвэс шиг харагдсан тэр залуу надад анхнаасаа л таалагдсан. CU-д орсон жаахан эвгүй мөч, согтуу охин уйлаад гүйж гарсан нь хүртэл одоо бодоход инээдтэй санагддаг. Чиний хажууд анх балмагдсан минь хүртэл одоо миний хамгийн дуртай дурсамжуудын нэг болсон.
+Гэхдээ тэр өдрөөс хойш чамтай хамт байх бүрд эвгүй санагдсан нэг ч мөч байгаагүй. Харин ч эсрэгээрээ — чиний хажууд л би улам өөрийнхөөрөө, илүү тайван, илүү үнэн байж чаддаг болсон.
+Бидний инээмсэглэлтэй хамт эхэлсэн тэр жижигхэн агшнууд…
+Хоёулаа дүрсгүйтэж атлаа амар амгалан байсан мөчүүд…
+Ямар ч онцгой зүйл болоогүй мэт атлаа сэтгэлд минь үүрд үлдсэн тэр л дурсамжууд бүгд миний хувьд үнэт эрдэнэ шиг.
+Бороотой шөнө намайг авах гэж ирсэн чинь одоо ч нүдэнд харагддаг. Шалбааг дээр үсрэхийг хүссэн хэрнээ “хүүхэд шиг” гэж хэлүүлэхээс ичээд зогсож байхад чи над руу ус цацан инээж зогссон. Тэр мөчид яагаад ч юм чи миний дутууг нөхөж байгаа мэт санагдсан. Дөнгөж хоёр дахь уулзалт байж ингэж бодсон гээд л бод доо. Тэр өдрөөс хойш бороо орохоор хамгийн түрүүнд санаанд минь чи орж ирдэг.
+“Хайртай шүү” гэж хэлэх бүрт чинь хайр гэдэг зүгээр нэг үг биш, харин хамтдаа бүтээдэг дурсамж, хамтдаа давдаг өдрүүд байдаг гэдгийг улам илүү ойлгодог. Чамтай хамт өнгөрүүлсэн жижигхэн инээд, урт яриа, нам гүмхэн мөч бүр миний зүрхэнд дулаахан ул мөр үлдээжээ.
+Заримдаа чи өөрөө анзаарахгүй өнгөрдөг тэр жижигхэн үйлдлүүд чинь — инээмсэглэн харж өгдөг харц, санаа зовсон үед минь дуугүйхэн дэргэд минь байх чинь — надад ер бусын, маш үнэтэй санагддаг. Чиний үгнүүд надад амьдралд итгэх итгэлийг дахин дахин өгөх юм.
+Миний амьдралд чи байгаа нь ямар их аз тохиол вэ. Амьдрал заримдаа хэцүү санагдаж, чи өөртөө эргэлзэх үе гардаг гэдгийг би мэднэ. Тийм мөчүүдэд би чиний дэргэд зүгээр л гарнаас чинь атгаад,
+“Би энд байна” гэж хэлэх тэр хүн нь байж болох уу?
+Миний дэргэд чи хэзээ ч өөрийгөө дутуу, хангалтгүй гэж бүү бодоорой. Учир нь чи миний ертөнцөд аль хэдийн хангалттай, бүр төгс нэгэн.
+Чиний өөр өөр төрх бүрд би дахин дахин дурлаад байгаа нь миний зүрх шалиг гэсэн үг үү… чи л намайг дандаа шинээр дурлуулах юм. Чамтай мэтгэлзэх дуртай. “Би хөөрхөн биш” гэж зөрүүдлэх бүрд чинь хөөрхөн гэж хэлэхэд чинь дуртай. Эвэртэй юм шиг харагддаг үсэнд чинь дуртай. Над руу хараад инээдэгт чинь дуртай. Чиний хажууд л би уйлж чаддаг. Чиний хажууд л би хамгийн эмзэг, хамгийн үнэн төрхөөрөө байж чаддаг. Бусдын өмнө барьдаг байсан бүх хүчтэй дүр маань чиний дэргэд зөөлрөөд, би өөрийгөө жинхэнэ эмэгтэй хүн, бас жоохон эрх хүүхэд шиг мэдэрдэг.
+Ирээдүйд бидний хамт бүтээх дурсамжууд өмнөх түүхий пизза, гулсуур дээрх тарвас шиг дулаахан, гэрэлтэй, хөгжилтэй байгаасай. Хэзээ нэгэн цагт эргэн хараад
+“Бид үнэхээр сайхан хайртай байжээ”
+гэж инээмсэглэн дурсах өдрүүд биднийг хүлээж байгаа гэдэгт би итгэдэг.
+
+миний өнгөрсөн дурсамж бүр чиний нэртэй,
+миний ирээдүй бүр чамтай хамт байгаасай
+
+Мадугийн мангар пингү 🐧💞
+
+</div>
+        </div>
+    </div>
+    <button class="view-button" id="viewBtn" onclick="goToValentine()">Цааш үзэх</button>
+</div>
+
+<div id="valentine-page">
+    <nav>
+        <div class="menu-item" onclick="showSection('reasons')">Reasons I Adore You</div>
+        <div class="menu-item" onclick="showSection('scratch')">🎟️ Try Your Luck</div>
+        <div class="menu-item" onclick="showSection('chat')">💕 Our Messages</div>
+        <div class="menu-item" onclick="showSection('growth')">💋 Since Our Lips Met</div>
+        <div class="menu-item" onclick="showSection('letters')">💌 One Important Question</div>
+    </nav>
+
+    <div class="content-container">
+        <div id="welcome-screen">
+            <h2 style="font-size: 2.5rem;">💖</h2>
+            <h2>Дээд талын цэснээс сонгоорой</h2>
+        </div>
+        <section id="reasons" class="content-section" style="position: relative; overflow: visible;">
+    <div class="slot-machine" style="background: #fb6f92; padding: 20px; border-radius: 20px; border: 6px solid #c9184a; position: relative; width: 100%; box-sizing: border-box; margin-top: 10px;">
+        <div class="header" style="background: white; padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 3px solid #ffb703;">
+            <h2 style="margin: 0; font-size: 1.1rem; color: #ff4d6d; text-transform: uppercase;">100 reasons why i love you 🎰</h2>
+        </div>
+
+        <div class="slot-window" style="height: 100px; background: #fff; border-radius: 12px; border: 5px solid #800f2f; overflow: hidden; display: flex; flex-direction: column; position: relative;">
+            <div id="slotContainer" class="slot-container" style="display: flex; flex-direction: column; width: 100%; transition: transform 2s cubic-bezier(0.1, 0, 0.1, 1);">
+                <div class="slot-item" style="height: 100px; min-height: 100px; display: flex; justify-content: center; align-items: center; font-size: 1rem; font-weight: bold; color: #333; text-align: center; padding: 0 15px;">for my MA BOO ❤️</div>
+            </div>
+        </div>
+
+        <div class="tray" style="margin-top: 15px; background: #a4133c; padding: 8px; border-radius: 5px; color: white; font-weight: bold; font-size: 0.8rem;">PUSH THE LEVER</div>
+
+        <div class="lever-container" onclick="spinSlot()" style="position: absolute; right: -45px; top: 70px; cursor: pointer; z-index: 10;">
+            <div class="lever-arm" id="leverArm" style="width: 12px; height: 70px; background: #800f2f; position: relative; transform-origin: bottom; transition: 0.3s; border-radius: 5px;">
+                <div class="lever-ball" style="width: 35px; height: 35px; background: #ff4d6d; border-radius: 50%; position: absolute; top: -25px; left: -12px; box-shadow: 0 4px 0 #c9184a;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">би хэмжээг нь const болгох гэсэн ч цаг тулчлаа xD</p>
+    <button class="view-button" style="background:#eee; color:#333; margin-top: 10px;" onclick="goHome()">Хаах</button>
+</section>
+
+
+        
+
+       <section id="scratch" class="content-section">
+    <h3 style="color: #ff4d6d;">🎟️ Valentine Scratch </h3>
+    
+    <div class="slider-viewport">
+        <div class="slider-track" id="sliderTrack">
+            <div class="card-wrapper active">
+                <div class="grid-container" id="grid-0"></div>
+                <div class="status-msg" id="msg-0">3 ижил дүрс олбол дараагийнх нь нээгдэнэ ✨</div>
+            </div>
+            <div class="card-wrapper">
+                <div class="grid-container" id="grid-1"></div>
+                <div class="status-msg" id="msg-1">Амжилт хүсье! ❤️</div>
+            </div>
+            <div class="card-wrapper">
+                <div class="grid-container" id="grid-2"></div>
+                <div class="status-msg" id="msg-2">Сүүлийн шат! 🏆</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+        <button class="btn" id="prevBtn" onclick="moveSlide('prev')" disabled style="padding: 8px 15px;">←</button>
+        <button class="btn" id="nextBtn" onclick="moveSlide('next')" disabled style="padding: 8px 15px;">→</button>
+    </div>
+    
+    <button class="view-button" style="background:#eee; color:#333; margin-top: 20px;" onclick="goHome()">Хаах</button>
+</section>
+
+<div id="winOverlay">
+    <h1 style="font-size: 60px; margin: 0;">🎉</h1>
+    <h2 id="winTitle" style="color: #ff4d6d;"> ХОЖЛОО!</h2>
+    <p id="winSub" style="font-size: 18px; color: #666; padding: 0 20px;"></p>
+    <button class="view-button" onclick="closeWin()">Үргэлжлүүлэх</button>
+</div>
+
+
+           
+           <section id="chat" class="content-section" style="max-width: 100%; padding: 20px 0;">
+    <h3>💬 карт дээр дараад үзээрэй</h3>
+    
+    <div class="slider-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; overflow: visible;">
+        <div id="messenger-slider">
+
+            
+            <div class="mini-card" onclick="toggleFlip(this)" style="min-width: 280px; height: 450px; perspective: 1000px;">
+                <div class="card-inner" style="position: relative; width: 100%; height: 100%; transition: 0.8s; transform-style: preserve-3d;">
+                    <div class="card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: white; border-radius: 20px; padding: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #ffeef1; overflow-y: auto;">
+                        <div class="msg-row"><div class="msg received">Chi ch hetsuhen nz ohintoi bollodo</div></div>
+                        <div class="msg-row"><div class="msg sent">Yaj hetsu bgd bhu</div></div>
+                    </div>
+                    <div class="card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #fffafb; border-radius: 20px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                        <div class="comment-text">Үерхсэнээс хойших анхны чат. Ер нь байнга санаж байхгүй юу дөө. Хэцүү ч гэсэн чамд үнэхээр хайриай үнэнч найз охинтой болсон шүү ❤️</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mini-card" onclick="toggleFlip(this)" style="min-width: 280px; height: 450px; perspective: 1000px;">
+                <div class="card-inner" style="position: relative; width: 100%; height: 100%; transition: 0.8s; transform-style: preserve-3d;">
+                    <div class="card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: white; border-radius: 20px; padding: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #ffeef1; overflow-y: auto;">
+                        <div class="msg-row"><div class="msg received">12kg usn uzemny zalu gjgashd</div></div>
+                        <div class="msg-row"><div class="msg received">Hha</div></div>
+                        <div class="msg-row"><div class="msg received">Bi chmg burhnas guij bj olj awsishu neeree</div></div>
+                        <div class="msg-row"><div class="msg received">Orhiod yawbl aln</div></div>
+                        <div class="msg-row">
+                            <div class="reply" style="align-self: flex-end;">Bi chmg burhnas guij bj olj awsishu neeree</div>
+                            <div class="msg sent">Nds guisimu?</div>
+                        </div>
+                        <div class="msg-row"><div class="msg sent">Nmg burhan gj yaj medev</div></div>
+                        <div class="msg-row"><div class="msg sent">Kss XD</div></div>
+                        <div class="msg-row"><div class="msg received">Za sulior</div></div>
+                        <div class="msg-row"><div class="msg received">Hha</div></div>
+                        <div class="msg-row"><div class="msg received">Cmtai ng uulzchihar harimarq sngdd bdima</div></div>
+                        <div class="msg-row"><div class="msg sent">Mhn ghde harih yostoi</div></div>
+                    </div>
+                    <div class="card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #fffafb; border-radius: 20px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                        <div class="comment-text">ЧИ МИНИЙ бурханаас гуйж авсан бэлэг. Тийм болохоор ядаж миний төлөө өөрийгөө хайрлаж бай! 🔒💖</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mini-card" onclick="toggleFlip(this)" style="min-width: 280px; height: 450px; perspective: 1000px;">
+                <div class="card-inner" style="position: relative; width: 100%; height: 100%; transition: 0.8s; transform-style: preserve-3d;">
+                    <div class="card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: white; border-radius: 20px; padding: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #ffeef1; overflow-y: auto;">
+                        <div class="msg-row"><div class="msg sent">Tgd hrn zaluuda unsnch hamagu gd bsn bnguyu</div></div>
+                        <div class="msg-row"><div class="msg received">Cmd ohiduud sn boldgumu</div></div>
+                        <div class="msg-row"><div class="msg received">Nasny hairaa oltlo hule mini hoo</div></div>
+                        <div class="msg-row"><div class="msg received">Hha</div></div>
+                        <div class="msg-row"><div class="msg sent">Uulna eej ntr uilna gd uhehgu yvd bsn chn yag unendee uhsench hamaagul bsin bnle XD</div></div>
+                        <div class="msg-row">
+                            <div class="reply" style="align-self: flex-end;">Nasny hairaa oltlo hule mini hoo</div>
+                            <div class="msg sent">😂 Olood aldtsoon</div>
+                        </div>
+                        <div class="msg-row">
+                            <div class="reply">Uulna eej ntr uilna gd uhehgu yvd bsn chn yag unendee uhsench hamaagul bsin bnle XD</div>
+                            <div class="msg received">Hud shu hud hahahah</div>
+                        </div>
+                    </div>
+                    <div class="card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #fffafb; border-radius: 20px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                        <div class="comment-text">Олоод алдчихсан ? Арай олоогүй байсан юм биш үү? энний хариуг надруу яг одоо чатаар явуул!!!. ⚓</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mini-card" onclick="toggleFlip(this)" style="min-width: 280px; height: 450px; perspective: 1000px;">
+                <div class="card-inner" style="position: relative; width: 100%; height: 100%; transition: 0.8s; transform-style: preserve-3d;">
+                    <div class="card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: white; border-radius: 20px; padding: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #ffeef1; overflow-y: auto;">
+                        <div class="msg-row"><div class="msg sent">🎬 Single байгаа шалтгаан (reel)</div></div>
+                        <div class="msg-row"><div class="msg received">Yady nasny hairaa huleejin hh.a</div></div>
+                        <div class="msg-row">
+                            <div class="reply" style="align-self: flex-end;">Yady nasny hairaa huleejin hh.a</div>
+                            <div class="msg sent">Nmg huleej yh gsi XD</div>
+                        </div>
+                        <div class="msg-row"><div class="msg received">Zahhh uulzy ghd uulzku bga hun odoo mny hulejga hun mon yum boluda</div></div>
+                    </div>
+                    <div class="card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #fffafb; border-radius: 20px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                        <div class="comment-text">Өмнөх чатнаас 7 хоногийн өмнөх чат гээд боддоо. Чиний өмнөх бодол өөрчлөгдсөн гэдгийг сануулдаг болохоор дурсамжтай чат 😉 ✨</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mini-card" onclick="toggleFlip(this)" style="min-width: 280px; height: 450px; perspective: 1000px;">
+                <div class="card-inner" style="position: relative; width: 100%; height: 100%; transition: 0.8s; transform-style: preserve-3d;">
+                    <div class="card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: white; border-radius: 20px; padding: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #ffeef1; overflow-y: auto;">
+                        <div class="msg-row"><div class="msg received">Bi bol neere ng itgl daagad uhtle amidrchih hune olwl sekundd 6 kuchindjgal bolgochihn gj nass hha</div></div>
+                        <div class="msg-row"><div class="msg received">Zza martarai martarai hha</div></div>
+                        <div class="msg-row"><div class="msg sent">Pue yayayaya</div></div>
+                        <div class="msg-row"><div class="msg sent">Ymr aimr anai ve</div></div>
+                        <div class="msg-row"><div class="msg received">Yhueee</div></div>
+                        <div class="msg-row"><div class="msg received">Yg tsagaa tulhar nohroso ichij zugtad balaig n awh bho XD</div></div>
+                        <div class="msg-row"><div class="msg sent">Iim goy muruudltu bj ert uhej t1tve</div></div>
+                        <div class="msg-row"><div class="msg received">Boloh yum boldgoro bolh bhoo hha</div></div>
+                        <div class="msg-row"><div class="msg received">Ter ch yhu erthn nohro olku bol 11 huuhd jilin zaitai grgn gj hud</div></div>
+                        <div class="msg-row"><div class="msg received">22 jil torhimu Puuuuuuu</div></div>
+                    </div>
+                    <div class="card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #fffafb; border-radius: 20px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                        <div class="comment-text">Ичмээр ч гэсэн гоё инээдтэй дурсамж. Гэснээс чи надтай хамт 11 хүүхэдтэй болмооргүй байна уу? 😂 🍼</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mini-card" onclick="toggleFlip(this)" style="min-width: 280px; height: 450px; perspective: 1000px;">
+                <div class="card-inner" style="position: relative; width: 100%; height: 100%; transition: 0.8s; transform-style: preserve-3d;">
+                    <div class="card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: white; border-radius: 20px; padding: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #ffeef1; overflow-y: auto;">
+                        <div class="msg-row">
+                            <div class="reply">iimerhu yumnd itgechdg t1 hun shu ahhah</div>
+                            <div class="msg sent">Unench bsin blgu hen medhvde</div>
+                        </div>
+                        <div class="msg-row"><div class="msg received">chi boditoor n neg ch haraagu hundee oorygoo shahn gju</div></div>
+                        <div class="msg-row"><div class="msg sent">Hrn tghin bolvu ?</div></div>
+                        <div class="msg-row"><div class="msg received">bi neg guzeetei ah bwl yahy ahah</div></div>
+                        <div class="msg-row"><div class="msg sent">Bi neg trans bvl yahy</div></div>
+                        <div class="msg-row"><div class="msg received">yioy ahahha za bz yugj hariulahwe bz</div></div>
+                        <div class="msg-row"><div class="msg sent">😂</div></div>
+                    </div>
+                    <div class="card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #fffafb; border-radius: 20px; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                        <div class="comment-text">Би чамайг 192 гэдэгт үнэндээ итгээгүй ээ. Анх уулзахдаа намхан байсан ч яадаг юм гэж бодож байсан. Юу гэх гэсэн бэ гэхээр Чи ЧИ болохоор л би ХАЙРТАЙ 💖</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div style="margin-top: 15px;">
+        <button class="back-btn" onclick="moveChat(-1)">←</button>
+        <button class="back-btn" onclick="moveChat(1)">→</button>
+    </div>
+    <button class="back-btn" onclick="goHome()" style="display: block; margin: 20px auto;">Хаах</button>
+
+</section>
+        <section id="growth" class="content-section" style="text-align:center; color:white;">
+    <h2 style="font-size:2rem;">💋 Since Our Lips Met</h2>
+    <p>Анх чиний уруул дээр үнссэнээс хойш...</p>
+
+    <div id="loveCounter" style="font-size:3.8rem; margin:20px 0;"></div>
+
+    <p style="max-width:400px; margin:auto;">
+        Тэр өдрөөс хойш өнгөрсөн хугацаа болгонд би дуртай
+    </p>
+
+    <button class="view-button" onclick="goHome()">Хаах</button>
+</section>
+
+
+       <section id="letters" class="content-section" style="text-align:center;">
+
+    
+
+    <div class="valentine-box">
+        <div id="window" class="letter-window">
+            <h1 id="question">Will you be my Valentine? 💖</h1>
+
+            <img id="mainGif"
+                 src="https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3ZXFpZmdsYnFnaXJoaTI3Zm5lOTg4ejg2ZjJjYTFjNzhkYWMzOWoxdSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/mqTjPZthMmyQsl2aY6/giphy.gif"
+                 class="cat-gif">
+
+            <div class="buttons">
+                <button class="btn yes-btn" onclick="sayYes()">Yes</button>
+                <button id="noBtn" class="btn no-btn" onmouseover="moveButton()">No</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="view-button" style="background:#eee; color:#333; margin-top:30px;" onclick="goHome()">Хаах</button>
+
+</section>
+
+    </div>
+</div>
+
+
+<script>
+    let currentInput = "";
+    const correctPin = "0615";
+    const dots = document.querySelectorAll('.dot');
+
+    function updateTime() {
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        const timeElement = document.getElementById('currentTime');
+        if(timeElement) timeElement.innerText = timeStr;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    function press(num) {
+        if (currentInput.length < 4) {
+            currentInput += num;
+            updateDots();
+            if (currentInput.length === 4) setTimeout(checkPin, 300);
+        }
+    }
+
+    function updateDots() {
+        dots.forEach((dot, i) => dot.classList.toggle('active', i < currentInput.length));
+    }
+
+    function checkPin() {
+        if (currentInput === correctPin) {
+            unlock();
+        } else {
+            const container = document.getElementById('dotContainer');
+            container.style.animation = "shake 0.3s linear";
+            document.getElementById('hint').style.opacity = "1";
+            setTimeout(() => {
+                container.style.animation = "";
+                clearPass();
+            }, 500);
+        }
+    }
+
+    function clearPass() { currentInput = ""; updateDots(); }
+
+    function unlock() {
+        const ls = document.getElementById('lock-screen');
+        const lp = document.getElementById('letter-page');
+        ls.style.transform = "translateY(-100%)";
+        ls.style.opacity = "0";
+        setTimeout(() => {
+            ls.style.display = "none";
+            lp.style.display = "flex";
+            setTimeout(() => lp.style.opacity = "1", 50);
+        }, 800);
+    }
+
+    function flipCardOnly() {
+        document.getElementById('myCard').classList.toggle('flipped');
+    }
+
+    function goToValentine() {
+        const lp = document.getElementById('letter-page');
+        const vp = document.getElementById('valentine-page');
+        
+        lp.style.opacity = "0";
+        setTimeout(() => {
+            lp.style.display = "none";
+            vp.style.display = "flex";
+        }, 500);
+    }
+
+    function showSection(id) {
+        // Welcome screen-ийг нуух
+        const welcome = document.getElementById('welcome-screen');
+        if(welcome) welcome.style.display = 'none';
+
+        // Бүх section-ийг нуух
+        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        
+        // Сонгосон section-ийг гаргах
+        const target = document.getElementById(id);
+        if(target) {
+            target.style.display = 'block';
+        } else {
+            console.error("Section with id '" + id + "' not found!");
+        }
+    }
+
+    function goHome() {
+        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        const welcome = document.getElementById('welcome-screen');
+        if(welcome) welcome.style.display = 'block';
+    }
+</script>
+<style>/* SCRATCH GAME STYLES */
+.slider-viewport {
+    width: 100%; height: 460px;
+    display: flex; justify-content: center; align-items: center;
+    position: relative; overflow: visible;
+}
+.slider-track {
+    display: flex; gap: 20px;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    align-items: center; position: absolute; left: 50%; margin-left: -150px;
+}
+.card-wrapper {
+    min-width: 300px; max-width: 300px; height: 400px;
+    background: white; border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    display: flex; flex-direction: column; align-items: center; padding: 20px;
+    transition: all 0.5s ease; opacity: 0.2; transform: scale(0.8);
+    border: 1px solid #ffeef1; pointer-events: none;
+}
+.card-wrapper.active {
+    opacity: 1; transform: scale(1); pointer-events: auto; z-index: 10;
+}
+.grid-container {
+    display: grid; grid-template-columns: repeat(3, 85px); grid-gap: 12px; margin-top: 15px;
+}
+.scratch-box {
+    position: relative; width: 85px; height: 85px; border-radius: 14px;
+    overflow: hidden; background: #fdfdfd;
+}
+.prize {
+    position: absolute; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+}
+.scratch-box canvas {
+    position: absolute; top: 0; left: 0; z-index: 2; touch-action: none;
+}
+.status-msg {
+    height: 50px; margin-top: 15px; font-size: 0.85em;
+    font-weight: 600; color: #ff4d6d; text-align: center;
+}
+#winOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.95); display: none;
+    flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
+}
+.confetti {
+    position: fixed; width: 10px; height: 10px; z-index: 9998;
+    animation: drift 3s forwards linear;
+}
+@keyframes drift {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+/* --- CHAT MEMORIES STYLE --- */
+.slider-container {
+    width: 100%;
+    overflow: visible;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    perspective: 1200px; /* 🔥 3D эффект */
+}
+
+#messenger-slider {
+    display: flex;
+    gap: 20px;
+    transition: transform 0.6s cubic-bezier(.25,.8,.25,1);
+    transform-style: preserve-3d;
+}
+
+.mini-card {
+    width: 280px;
+    height: 180px;
+    transition: all 0.6s cubic-bezier(.25,.8,.25,1);
+    transform: scale(0.8) rotateY(25deg);
+    opacity: 0.5;
+    filter: blur(2px);
+}
+
+.mini-card.active {
+    transform: scale(1) rotateY(0deg);
+    opacity: 1;
+    filter: blur(0);
+    z-index: 10;
+}
+
+
+.mini-card.flipped .card-inner {
+    transform: rotateY(180deg);
+}  .msg-row { display: flex; flex-direction: column; margin-bottom: 8px; width: 100%; }
+.msg { padding: 8px 12px; border-radius: 18px; font-size: 0.82rem; max-width: 85%; line-height: 1.4; position: relative; }
+.received { background: #f0f2f5; align-self: flex-start; color: black; border-bottom-left-radius: 4px; }
+.sent { background: #ee7d94; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.reply { font-size: 0.7rem; color: #888; border-left: 2px solid #ddd; padding-left: 8px; margin-bottom: 2px; align-self: flex-start; }
+.comment-text { font-size: 0.9rem; line-height: 1.5; color: #ff4d6d; }
+.mini-card { transition: transform 0.3s; }
+/* --- ONE IMPORTANT QUESTION STYLE --- */
+
+.valentine-box {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.letter-window {
+    width: 320px;
+    min-height: 300px;
+    background: white;
+    border: 5px solid #ee7d94;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    transition: transform 0.5s ease;
+}
+
+.letter-window.open {
+    transform: scale(1.1);
+    border-color: #ee7d94;
+}
+
+.cat-gif {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    margin: 20px 0;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.btn {
+    width: 100px;
+    padding: 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.yes-btn {
+    background-color: #f25675;
+    color: white;
+}
+
+.no-btn {
+    background-color: #f25675;
+    color: white;
+}
+
+
+
+</style>  
+<script>
+const reasons = [
+"1 Who care гэх үг 🙈", "2 Толинд хөөрхөн харагддаг болгосон 🪞", "3 Тэнэг санааг минь хамт хэрэгжүүлдэг 🤪", "4 Миний хажууд өөрийнхөө өөрөөрөө байдаг 😌", "5 Хамт гадаа хонож чаддаг 🌙", "6 Лава дундуур хамт явдаг 🥾", "7 Дандаа аргаддаг 😏", "8 Эрхийн балайг минь мэдрүүлдэг 🤯", "9 Уурлахад чихэр гаргаж өгдөг 🍬", "10 Миний хийсэн хоолыг амтархан иддэг 🍲", "11 Харддаггүй, харамладаг 💖", "12 Гоё үнэртэй 🌸", "13 Зүрхний pulse ихэсгэж чаддаг 💓", "14 Найзуудыг маань хүндэлдэг 🤝", "15 Тархиа унтраах цор ганц орон зай 🛋️", "16 Чамтай хамт өтөлж чадах итгэл төрдөг 🥰", "17 Хэзээ ч шүүмжилдэггүй 👍", "18 Чиний нүд харц aaahhhh 😍", "19 Намайг эвэртэй болгодог 🦄", "20 Тэвэрч унтах мэдрэмж 🛏️💞", "21 Цүнхийг минь үүрдэг 🎒", "22 Миний найз охин муахахаха 😂", "23 Шоб шоб 💋💋💋", "24 Дулаахан тэврэлт 🤗", "25 Намайг өргөдөг аймар хүчтэй 💪", "26 Намайг алга болгохоос айдаг 😳", "27 Итгэж чаддаг хүн 💕", "28 Усан борооноор үүрийн 4 хүртэл тоглосон хүн 🌧️", "29 Үзэл бодол зөрчилдвөл хэрэлддэггүй, мэтгэлздэг 🫂", "30 Том биетэй хүүхэд 🏋️‍♂️", "31 Гулсуур дээр тарвас халбагадаж иддэг 🍉", "32 Real sleeping beauty 😴💖", "33 Үнсэх дуртай ганц хүн 💋", "34 Миний толгойд биш зүрхэнд түрээсгүй оршдог ❤️", "35 Чиний дэргэд л би ердийнхөөсөө чөлөөтэй, энгийн байдаг 😌", "36 Чи л ганцаараа бусадтай адилгүй 🦋", "37 Хэн ч намайг чам шиг тайтгаруулаагүй 🫂", "38 Чиний дэргэд л би ер бусын амгалан байдаг 🌿", "39 Ойлгож чадахгүй үедээ ойлгох гэж хичээдэг 🧠", "40 Чи “ЧИ” болохоор 💖", "41 Чамайг хамт байгааг чинь мэдсээр байж л санадаг 💭", "42 Намайг хамгийн муугаараа байхад ч орхиж явдаггүй 🤗", "43 Миний жижиг ч хамаагүй сайн талыг олж хардаг 👀", "44 Чамайг хараад сандардаг, өөрийгөө бодохоор инээд хүрдэг 😳😂", "45 Гунигтай үед зүгээр ойлгож сонсдог 😔💌", "46 Харанхуйд чамтай байхад огт айдаггүй 🌌", "47 Хайртаа гэж дууддаг 🥰", "48 Өөрийгөө ч анхаарах завгүй байхад халамжилдаг 🫶", "49 Өнгөрсөн амьдрал, дурсамжаа хуваалцдагт дуртай 📖", "50 Тэврээд л, тэврээд л баймаар санагдуулдагт 🤗💖", "51 Явахаасаа өмнө хацар, духан дээр минь үнсдэг 😘", "52 Би зүгээр л чамд хайртай 💞", "53 Чиний хоолой 🎤", "54 Миний бүх мөрөөдлийг биелэх боломжтой гэдгийг мэдрүүлсэн ✨", "55 Надад итгэдэгт чинь хайртай 🤗", "56 Миний дэргэд уйлахаасаа санаа зовдоггүй 😢💌", "57 Хамтдаа элгээ хөштөл инээж чаддаг 😂", "58 Яаж уурласан ч хайртайшүү гэж хэлдэг 😘", "59 Миний хамгийн том шүтэн бишрэгч байж, үргэлж дэмждэг 👏💖", "60 Намайг байгаагаар минь хайрладаг 🫂", "61 Хазуулдаг 😋", "62 Гарыг минь дааруулдаггүй 🧤", "63 Завгүй байхад минь ойлгож чаддаг 💖", "64 Миний гуяыг дэрлээд унтдаг 🛏️", "65 Анх үнсэхэд гаргаж байсан мангар царай 😍", "66 Намайг дагаад хаашаа ч явахад бэлэн 🌍", "67 Унтаж байхдаа ямар хөөрхөн гээч 😴", "68 Бусад охидууд руу харц шиддэггүй 👀", "69 Утсан дээрээ миний зургийг тавьдаг 📱❤️", "70 Надтай хослуулаад хөөрхөн хувцасладаг 👕👗", "71 Будаггүй байсан ч хөөрхөн 😚", "72 Шуламлаг занг минь аргадаж чаддаг 🧙‍♂️", "73 Эмэгтэй хүн гэдгийг минь мэдрүүлдэг 💃", "74 My first… 🥰", "75 Үсээ надаар л янзлуулдаг 💇‍♀️", "76 Жижигхэн гэж уурлуулдаг 😏", "77 Анхны үнсэлт 💋", "78 Миний нүүрийг долоохоор зоригтой нэгэн 😋", "79 Чиний үсээр тоглуулахыг зөвшөөрдөг 💇‍♀️", "80 Чи над руу яг л амьдралдаа харж байсан хамгийн сайхан зүйл мэт хардаг 🥰", "81 Намайг гижигдэж чаддаг 😆", "82 Яасан 😏💅💋", "83 Чиний зүрхний цохилт 💓", "84 PC рүү дагуулж ордог 🖥️", "85 Хамт зураг даруулдаг 📸", "86 Цаг хугацааг марттал үргэлжилдэг нойр 😴", "87 Надаар иллэг хийлгэдэг 💆‍♀️", "88 Намайг уурлахыг мэддэг ч хамт Tekken тоглодог 🎮", "89 Хаагуур ч хамаагүй хамт явдаг 🚶‍♂️🚶‍♀️", "90 Нурууг минь барьж өгдөг 🤗", "91 Би өөрийнхөө үнэ цэнийг мартсан үед сануулж өгдөг 🫶", "92 Ажлаас тараад стресстэй байхад шар сүүний чихэр өгдөг 🥛🍬", "93 Бид хамт байхад миний бүх асуудал алга болчих шиг болдог 🌟", "94 Чиний ертөнцийг төв нь би юм шиг мэдрэмж төрүүлдэг 🫂", "95 Бидний хамт өнгөрүүлсэн цаг хэзээ ч дэмий байдаггүй ⏳", "96 Энэ дэлхий дээрх бүх хүмүүс дундаас чи намайг сонгосон 💖", "97 Хэтэрхий их хайртай болохоор удаан уурлаж чаддаггүй 😅", "98 Дотроо ч, гаднаа ч үзэсгэлэнтэй 🌸", "99 Миний анхны хайр байгаагүй ч, сүүлчийн хайр ❤️", "100 Чи минийх 😍💖🌟💞"
+];
+
+let currentReasonIndex = 0;
+let isSpinning = false;
+
+function spinSlot() {
+    if (isSpinning) return;
+    isSpinning = true;
+
+    const leverArm = document.getElementById('leverArm');
+    const slotContainer = document.getElementById('slotContainer');
+    const itemHeight = 100;
+    
+    // Lever animation
+    leverArm.style.transform = "rotateX(60deg) scaleY(0.7)";
+    setTimeout(() => { leverArm.style.transform = "rotateX(0deg) scaleY(1)"; }, 300);
+
+    let spinCount = 10; 
+    let spinList = [];
+    
+    // Эргэлдэх үед харагдах санамсаргүй шалтгаанууд
+    for(let i=0; i < spinCount - 1; i++) {
+        spinList.push(reasons[Math.floor(Math.random() * reasons.length)]);
+    }
+    // Зогсох үед харагдах дараагийн шалтгаан
+    spinList.push(reasons[currentReasonIndex]);
+
+    slotContainer.innerHTML = '';
+    spinList.forEach(text => {
+        const div = document.createElement('div');
+        div.className = 'slot-item';
+        div.style.height = '100px';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'center';
+        div.style.alignItems = 'center';
+        div.style.textAlign = 'center';
+        div.innerText = text;
+        slotContainer.appendChild(div);
+    });
+
+    slotContainer.style.transition = 'none';
+    slotContainer.style.transform = 'translateY(0)';
+
+    setTimeout(() => {
+        slotContainer.style.transition = 'transform 2s cubic-bezier(0.1, 0, 0.1, 1)';
+        const finalOffset = -(spinCount - 1) * itemHeight;
+        slotContainer.style.transform = `translateY(${finalOffset}px)`;
+    }, 50);
+
+    setTimeout(() => {
+        isSpinning = false;
+        currentReasonIndex = (currentReasonIndex + 1) % reasons.length;
+        
+        // Зүрхэн хөдөлгөөн дуудах
+        if(typeof spawnInfinityHeart === "function") {
+            for(let i=0; i<10; i++) spawnInfinityHeart();
+        }
+    }, 2100);
+} 
+// --- SCRATCH GAME LOGIC ---
+let scratchIndex = 0;
+let roundWon = [false, false, false];
+const symbols = ['🌹', '🎁', '💖', '🍭', '⭐', '🎈'];
+const scratchPrizes = [
+    "Бүтэн биеийн иллэг хийлгэх эрх хожлоо 💆‍♀️✨",
+    "Ням, ням, ням 😋🍆❤️",
+    "Бүтэн 24 цаг уурлахгүй гэж амлаж байнааааа 😇"
+];
+let scratchScores = [{}, {}, {}];
+
+function initScratchGame() {
+    for (let r = 0; r < 3; r++) {
+        const grid = document.getElementById(`grid-${r}`);
+        if(!grid || grid.children.length > 0) continue; // Дахин үүсгэхээс сэргийлнэ
+
+        const winnerSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+        let items = [winnerSymbol, winnerSymbol, winnerSymbol];
+        while (items.length < 9) {
+            let randomItem = symbols[Math.floor(Math.random() * symbols.length)];
+            if (items.filter(x => x === randomItem).length < 2) items.push(randomItem);
+        }
+        items.sort(() => Math.random() - 0.5);
+
+        items.forEach((item, i) => {
+            const box = document.createElement('div');
+            box.className = 'scratch-box';
+            box.innerHTML = `<div class="prize">${item}</div><canvas id="canv-${r}-${i}" width="85" height="85"></canvas>`;
+            grid.appendChild(box);
+            setupScratchLogic(document.getElementById(`canv-${r}-${i}`), item, r);
+        });
+    }
+}
+
+function setupScratchLogic(canvas, val, rIdx) {
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#cfd8dc';
+    ctx.fillRect(0, 0, 85, 85);
+    ctx.fillStyle = '#b0bec5';
+    for(let i=0; i<30; i++) ctx.fillRect(Math.random()*85, Math.random()*85, 4, 4);
+
+    let isDrawing = false;
+    let revealed = false;
+
+    function scratch(e) {
+        if (!isDrawing || roundWon[rIdx] || rIdx !== scratchIndex) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+        const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
+
+        if (!revealed) {
+            const data = ctx.getImageData(0, 0, 85, 85).data;
+            let hits = 0;
+            for (let i = 3; i < data.length; i += 4) if (data[i] === 0) hits++;
+            if (hits > (85 * 85) * 0.5) {
+                revealed = true;
+                canvas.style.opacity = "0";
+                setTimeout(() => canvas.style.display = "none", 500);
+                checkScratchWin(val, rIdx);
+            }
+        }
+    }
+    canvas.onmousedown = canvas.ontouchstart = () => isDrawing = true;
+    window.addEventListener('mouseup', () => isDrawing = false);
+    window.addEventListener('touchend', () => isDrawing = false);
+    canvas.onmousemove = canvas.ontouchmove = (e) => { if(e.touches) e.preventDefault(); scratch(e); };
+}
+
+function checkScratchWin(val, rIdx) {
+    scratchScores[rIdx][val] = (scratchScores[rIdx][val] || 0) + 1;
+    if (scratchScores[rIdx][val] === 3) {
+        roundWon[rIdx] = true;
+        showWinOverlay(`ХОНЖВОР ${rIdx + 1}`, scratchPrizes[rIdx]);
+        document.getElementById(`msg-${rIdx}`).innerHTML = `ЯЛАГЧ! 🎉 <br> 3 ширхэг ${val} оллоо!`;
+        updateScratchSlider();
+    }
+}
+
+function showWinOverlay(title, sub) {
+    document.getElementById('winTitle').innerText = title;
+    document.getElementById('winSub').innerText = sub;
+    document.getElementById('winOverlay').style.display = 'flex';
+    for(let i=0; i<40; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.backgroundColor = ['#ff4d6d','#ffd166','#4cc9f0'][Math.floor(Math.random()*3)];
+        c.style.animationDelay = Math.random() * 2 + 's';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 3000);
+    }
+}
+
+function closeWin() { document.getElementById('winOverlay').style.display = 'none'; }
+
+function moveSlide(dir) {
+    if (dir === 'next' && scratchIndex < 2) scratchIndex++;
+    else if (dir === 'prev' && scratchIndex > 0) scratchIndex--;
+    updateScratchSlider();
+}
+
+function updateScratchSlider() {
+    const track = document.getElementById('sliderTrack');
+    const cards = document.querySelectorAll('.card-wrapper');
+    track.style.transform = `translateX(${-scratchIndex * 320}px)`;
+    cards.forEach((c, i) => c.classList.toggle('active', i === scratchIndex));
+    document.getElementById('prevBtn').disabled = (scratchIndex === 0);
+    document.getElementById('nextBtn').disabled = !roundWon[scratchIndex] || scratchIndex === 2;
+}
+
+// Үндсэн showSection функц дээр тоглоомыг эхлүүлэх хэсгийг нэмэх
+function showSection(id) {
+    // welcome screen нуух
+    const welcome = document.getElementById('welcome-screen');
+    if (welcome) welcome.style.display = 'none';
+
+    // бүх section нуух
+    document.querySelectorAll('.content-section').forEach(s => {
+        s.style.display = 'none';
+    });
+
+    // сонгосон section харуулах
+
+    const target = document.getElementById(id);
+    if (target) {
+        target.style.display = 'block';
+    }
+
+    // ⭐ зөвхөн scratch үед тоглоом асаах
+    if (id === 'scratch') {
+        initScratchGame();
+        updateScratchSlider();
+        
+    }
+    if (id === 'chat') {
+    currentChatIndex = 0;
+    moveChat(0);
+}
+
+}  
+
+let currentChatIndex = 0;
+
+function toggleFlip(card) {
+    card.classList.toggle('flipped');
+}
+
+function moveChat(direction) {
+    const slider = document.getElementById('messenger-slider');
+    const cards = document.querySelectorAll('.mini-card');
+    const container = document.querySelector('.slider-container');
+
+    currentChatIndex += direction;
+
+    if (currentChatIndex < 0) currentChatIndex = 0;
+    if (currentChatIndex > cards.length - 1)
+        currentChatIndex = cards.length - 1;
+
+    const gap = 20;
+    const cardBaseWidth = 280; // 🔥 scale-гүй үндсэн өргөн
+    const containerWidth = container.offsetWidth;
+
+    const offset =
+        (containerWidth / 2)
+        - (cardBaseWidth / 2)
+        - (currentChatIndex * (cardBaseWidth + gap));
+
+    slider.style.transform = `translateX(${offset}px)`;
+
+    cards.forEach((card, index) => {
+        card.classList.toggle('active', index === currentChatIndex);
+        card.classList.remove('flipped');
+    });
+}
+// 💋 First kiss date — энд өөрийн огноо, цагаа тохируул
+const firstKissDate = new Date("2025-06-15T17:30:00");
+
+function updateLoveCounter() {
+    const now = new Date();
+
+    let years = now.getFullYear() - firstKissDate.getFullYear();
+    let months = now.getMonth() - firstKissDate.getMonth();
+    let days = now.getDate() - firstKissDate.getDate();
+
+    if (days < 0) {
+        months--;
+        const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        days += prevMonth.getDate();
+    }
+
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    const diff = now - firstKissDate;
+
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    document.getElementById("loveCounter").innerHTML =
+        `
+        ${years} жил 
+        ${months} сар 
+        ${days} өдөр <br>
+        ${hours} цаг 
+        ${minutes} минут 
+        ${seconds} секунд 💞
+        `;
+}
+
+setInterval(updateLoveCounter, 1000);
+updateLoveCounter();
+function sayYes() {
+    document.getElementById('question').innerHTML = "Мөнгө дууссан snack аа авчраарай! 🥰";
+
+    document.getElementById('mainGif').src ="https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3anZzZDR5ZTl2eHo2dzN2N3diY2RxamFqd2RpcHJzcWV6Y2Z3c3FiaSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/sNqB7n0uhrQueJfVeD/giphy.gif";
+
+    document.getElementById('window').classList.add('open');
+    document.getElementById('noBtn').style.display = 'none';
+}
+
+function moveButton() {
+    const btn = document.getElementById('noBtn');
+
+    const x = Math.random() * (window.innerWidth - btn.offsetWidth);
+    const y = Math.random() * (window.innerHeight - btn.offsetHeight);
+
+    btn.style.position = 'fixed';
+    btn.style.left = x + 'px';
+    btn.style.top = y + 'px';
+}
+
+
+
+
+ </script>
+
+</body>
+</html>
